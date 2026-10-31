@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from datetime import datetime
 
-from payment_service.application.ports import EventPublisher, UowFactory
-from payment_service.domain.models import utcnow
+from paypong.application.ports import EventPublisher, UowFactory
+from paypong.domain.models import utcnow
 
 
 class PublishOutboxBatch:

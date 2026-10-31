@@ -3,10 +3,10 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from uuid import uuid5
 
-from payment_service.application.contracts import PaymentCreated
-from payment_service.application.ports import PaymentGateway, UowFactory, WebhookSender
-from payment_service.domain.errors import PaymentNotFound
-from payment_service.domain.models import OutboxEvent, PaymentStatus, utcnow
+from paypong.application.contracts import PaymentCreated
+from paypong.application.ports import PaymentGateway, UowFactory, WebhookSender
+from paypong.domain.errors import PaymentNotFound
+from paypong.domain.models import OutboxEvent, PaymentStatus, utcnow
 
 logger = logging.getLogger(__name__)
 

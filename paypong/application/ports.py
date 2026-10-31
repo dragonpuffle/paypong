@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any, Protocol, Self
 from uuid import UUID
 
-from payment_service.domain.models import OutboxEvent, Payment, PaymentStatus
+from paypong.domain.models import OutboxEvent, Payment, PaymentStatus
 
 
 class PaymentRepository(Protocol):

@@ -1,6 +1,6 @@
 import httpx
 
-from payment_service.domain.models import Payment
+from paypong.domain.models import Payment
 
 
 class HttpWebhookSender:

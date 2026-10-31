@@ -49,7 +49,7 @@ services:
   consumer:
     <<: *app
     stop_grace_period: 40s
-    command: ["python", "-m", "payment_service.worker"]
+    command: ["python", "-m", "paypong.worker"]
     depends_on:
       migrate: {condition: service_completed_successfully}
       rabbitmq: {condition: service_healthy}

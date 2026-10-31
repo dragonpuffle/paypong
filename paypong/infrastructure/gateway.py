@@ -2,7 +2,7 @@ import asyncio
 import hashlib
 import random
 
-from payment_service.domain.models import Payment, PaymentStatus
+from paypong.domain.models import Payment, PaymentStatus
 
 
 class SimulatedGateway:

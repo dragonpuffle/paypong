@@ -10,17 +10,17 @@ import pytest
 from faststream.exceptions import IncorrectState
 from sqlalchemy import select
 
-from payment_service.api import create_app
-from payment_service.application.outbox import PublishOutboxBatch
-from payment_service.application.processing import ProcessPayment
-from payment_service.config import Settings
-from payment_service.domain.models import OutboxEvent, PaymentStatus
-from payment_service.infrastructure.postgres.models import OutboxRow, PaymentRow
-from payment_service.infrastructure.postgres.uow import SqlUnitOfWork
-from payment_service.infrastructure.rabbitmq.publisher import RabbitEventPublisher
-from payment_service.infrastructure.rabbitmq.topology import declare_topology, make_broker
-from payment_service.infrastructure.webhook import HttpWebhookSender
-from payment_service.presentation.consumer import ConsumerHandler, register_consumer
+from paypong.api import create_app
+from paypong.application.outbox import PublishOutboxBatch
+from paypong.application.processing import ProcessPayment
+from paypong.config import Settings
+from paypong.domain.models import OutboxEvent, PaymentStatus
+from paypong.infrastructure.postgres.models import OutboxRow, PaymentRow
+from paypong.infrastructure.postgres.uow import SqlUnitOfWork
+from paypong.infrastructure.rabbitmq.publisher import RabbitEventPublisher
+from paypong.infrastructure.rabbitmq.topology import declare_topology, make_broker
+from paypong.infrastructure.webhook import HttpWebhookSender
+from paypong.presentation.consumer import ConsumerHandler, register_consumer
 from tests.integration.test_postgres import database as database
 
 pytestmark = pytest.mark.integration
@@ -87,7 +87,7 @@ async def test_outbox_retained_on_unavailable_broker_then_recovers(database, rab
 async def test_crash_after_publish_before_sql_mark_republishes_same_id(
     database, rabbit, monkeypatch
 ):
-    from payment_service.infrastructure.postgres.repositories import SqlOutboxRepository
+    from paypong.infrastructure.postgres.repositories import SqlOutboxRepository
 
     _, sessions = database
     broker, new, _ = rabbit

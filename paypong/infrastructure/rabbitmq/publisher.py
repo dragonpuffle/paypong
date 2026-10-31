@@ -3,7 +3,7 @@ import asyncio
 from faststream.rabbit import RabbitBroker
 from pamqp.commands import Basic
 
-from payment_service.domain.models import OutboxEvent
+from paypong.domain.models import OutboxEvent
 
 
 class RabbitEventPublisher:

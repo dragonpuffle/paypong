@@ -5,15 +5,15 @@ from contextlib import AsyncExitStack
 import httpx
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from payment_service.application.outbox import PublishOutboxBatch
-from payment_service.application.processing import ProcessPayment
-from payment_service.config import Settings
-from payment_service.infrastructure.gateway import SimulatedGateway
-from payment_service.infrastructure.postgres.uow import SqlUnitOfWork
-from payment_service.infrastructure.rabbitmq.publisher import RabbitEventPublisher
-from payment_service.infrastructure.rabbitmq.topology import declare_topology, make_broker
-from payment_service.infrastructure.webhook import HttpWebhookSender
-from payment_service.presentation.consumer import ConsumerHandler, register_consumer
+from paypong.application.outbox import PublishOutboxBatch
+from paypong.application.processing import ProcessPayment
+from paypong.config import Settings
+from paypong.infrastructure.gateway import SimulatedGateway
+from paypong.infrastructure.postgres.uow import SqlUnitOfWork
+from paypong.infrastructure.rabbitmq.publisher import RabbitEventPublisher
+from paypong.infrastructure.rabbitmq.topology import declare_topology, make_broker
+from paypong.infrastructure.webhook import HttpWebhookSender
+from paypong.presentation.consumer import ConsumerHandler, register_consumer
 
 logger = logging.getLogger(__name__)
 

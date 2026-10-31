@@ -6,8 +6,8 @@ from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from payment_service.domain.models import OutboxEvent, Payment, PaymentStatus
-from payment_service.infrastructure.postgres.models import OutboxRow, PaymentRow
+from paypong.domain.models import OutboxEvent, Payment, PaymentStatus
+from paypong.infrastructure.postgres.models import OutboxRow, PaymentRow
 
 
 def payment_values(payment: Payment) -> dict:

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, JsonValue, field_validator
 
-from payment_service.domain.models import PaymentStatus
+from paypong.domain.models import PaymentStatus
 
 
 class CreatePaymentBody(BaseModel):

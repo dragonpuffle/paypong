@@ -3,7 +3,7 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from payment_service.infrastructure.postgres.repositories import (
+from paypong.infrastructure.postgres.repositories import (
     SqlOutboxRepository,
     SqlPaymentRepository,
 )

@@ -18,9 +18,9 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from payment_service.domain.models import OutboxEvent, Payment, PaymentStatus, utcnow
-from payment_service.infrastructure.postgres.models import Base, OutboxRow, PaymentRow
-from payment_service.infrastructure.postgres.uow import SqlUnitOfWork
+from paypong.domain.models import OutboxEvent, Payment, PaymentStatus, utcnow
+from paypong.infrastructure.postgres.models import Base, OutboxRow, PaymentRow
+from paypong.infrastructure.postgres.uow import SqlUnitOfWork
 
 pytestmark = pytest.mark.integration
 ROOT = Path(__file__).resolve().parents[2]

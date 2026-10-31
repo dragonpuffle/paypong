@@ -2,8 +2,8 @@ import asyncio
 import logging
 import signal
 
-from payment_service.bootstrap import run_worker
-from payment_service.config import Settings
+from paypong.bootstrap import run_worker
+from paypong.config import Settings
 
 
 async def serve() -> None:

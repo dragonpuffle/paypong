@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
 
-from payment_service.domain.models import OutboxEvent, Payment, utcnow
+from paypong.domain.models import OutboxEvent, Payment, utcnow
 
 
 @dataclass

@@ -5,13 +5,13 @@ from decimal import Decimal
 from unittest import IsolatedAsyncioTestCase
 from uuid import uuid4
 
-from payment_service.application.contracts import PaymentCreated
-from payment_service.application.dto import CreatePaymentCommand
-from payment_service.application.outbox import PublishOutboxBatch
-from payment_service.application.payments import CreatePayment, GetPayment
-from payment_service.application.processing import ProcessPayment
-from payment_service.domain.errors import IdempotencyConflict, PaymentNotFound
-from payment_service.domain.models import PaymentStatus
+from paypong.application.contracts import PaymentCreated
+from paypong.application.dto import CreatePaymentCommand
+from paypong.application.outbox import PublishOutboxBatch
+from paypong.application.payments import CreatePayment, GetPayment
+from paypong.application.processing import ProcessPayment
+from paypong.domain.errors import IdempotencyConflict, PaymentNotFound
+from paypong.domain.models import PaymentStatus
 from tests.fakes import MemoryStore, MemoryUow
 
 

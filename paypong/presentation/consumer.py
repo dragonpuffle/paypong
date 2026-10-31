@@ -8,12 +8,12 @@ from faststream import AckPolicy
 from faststream.rabbit import RabbitBroker, RabbitMessage
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from payment_service.application.contracts import PaymentCreated
-from payment_service.application.ports import UowFactory
-from payment_service.application.processing import ProcessPayment
-from payment_service.domain.errors import PaymentNotFound
-from payment_service.domain.models import OutboxEvent
-from payment_service.infrastructure.rabbitmq.topology import PAYMENTS
+from paypong.application.contracts import PaymentCreated
+from paypong.application.ports import UowFactory
+from paypong.application.processing import ProcessPayment
+from paypong.domain.errors import PaymentNotFound
+from paypong.domain.models import OutboxEvent
+from paypong.infrastructure.rabbitmq.topology import PAYMENTS
 
 logger = logging.getLogger(__name__)
 

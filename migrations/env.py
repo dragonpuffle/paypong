@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy import Connection, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from payment_service.infrastructure.postgres.models import Base
+from paypong.infrastructure.postgres.models import Base
 
 config = context.config
 if config.config_file_name is not None:

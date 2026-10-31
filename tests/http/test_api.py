@@ -3,8 +3,8 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from payment_service.api import create_app
-from payment_service.config import Settings
+from paypong.api import create_app
+from paypong.config import Settings
 from tests.fakes import MemoryStore
 
 KEY = "test-api-key-123456"

@@ -3,10 +3,10 @@ import asyncio
 import httpx
 from sqlalchemy import func, select
 
-from payment_service.api import create_app
-from payment_service.config import Settings
-from payment_service.infrastructure.postgres.models import OutboxRow, PaymentRow
-from payment_service.infrastructure.postgres.uow import SqlUnitOfWork
+from paypong.api import create_app
+from paypong.config import Settings
+from paypong.infrastructure.postgres.models import OutboxRow, PaymentRow
+from paypong.infrastructure.postgres.uow import SqlUnitOfWork
 from tests.http.test_api import BODY, KEY
 from tests.integration.test_postgres import database as database
 

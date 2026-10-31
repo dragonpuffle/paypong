@@ -5,11 +5,11 @@ from math import isfinite
 from typing import Any
 from uuid import UUID, uuid4
 
-from payment_service.application.contracts import PaymentCreated
-from payment_service.application.dto import CreatePaymentCommand
-from payment_service.application.ports import UowFactory
-from payment_service.domain.errors import IdempotencyConflict, PaymentNotFound
-from payment_service.domain.models import OutboxEvent, Payment
+from paypong.application.contracts import PaymentCreated
+from paypong.application.dto import CreatePaymentCommand
+from paypong.application.ports import UowFactory
+from paypong.domain.errors import IdempotencyConflict, PaymentNotFound
+from paypong.domain.models import OutboxEvent, Payment
 
 
 def _canonical_json(value: Any) -> str:

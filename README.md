@@ -111,13 +111,13 @@ Python 3.13+, uv. Зависимости зафиксированы в `uv.lock`
 uv sync --frozen
 # PostgreSQL/RabbitMQ должны быть доступны по DATABASE_URL/RABBITMQ_URL
 uv run alembic upgrade head
-uv run uvicorn payment_service.api:create_app --factory
-uv run python -m payment_service.worker
+uv run uvicorn paypong.api:create_app --factory
+uv run python -m paypong.worker
 ```
 
 Settings читает `.env`; Alembic читает именно переменную окружения DATABASE_URL.
 API_KEY обязателен при локальном старте (в Compose задан). Остальные настройки
-и ограничения находятся в `src/payment_service/config.py`.
+и ограничения находятся в `paypong/config.py`.
 
 ```sh
 uv run python scripts/ai/verify.py --project .
