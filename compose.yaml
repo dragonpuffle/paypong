@@ -1,0 +1,59 @@
+name: paypong
+x-app: &app
+  build: .
+  environment:
+    API_KEY: ${API_KEY:-local-development-key-change-me}
+    DATABASE_URL: postgresql+asyncpg://paypong:paypong@postgres:5432/paypong
+    RABBITMQ_URL: amqp://paypong:paypong@rabbitmq:5672/
+  init: true
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: paypong
+      POSTGRES_PASSWORD: paypong
+      POSTGRES_DB: paypong
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paypong -d paypong"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:4.1-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: paypong
+      RABBITMQ_DEFAULT_PASS: paypong
+    volumes: ["rabbit-data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    <<: *app
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; urllib.request.urlopen(urllib.request.Request('http://localhost:8000/health', headers={'X-API-Key':os.environ['API_KEY']}))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  consumer:
+    <<: *app
+    stop_grace_period: 40s
+    command: ["python", "-m", "payment_service.worker"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      rabbitmq: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  postgres-data:
+  rabbit-data:

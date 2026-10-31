@@ -1,0 +1,43 @@
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any, Protocol, Self
+from uuid import UUID
+
+from payment_service.domain.models import OutboxEvent, Payment, PaymentStatus
+
+
+class PaymentRepository(Protocol):
+    async def insert_if_absent(self, payment: Payment) -> bool: ...
+    async def find_by_key(self, key: str) -> Payment | None: ...
+    async def get(self, payment_id: UUID, *, for_update: bool = False) -> Payment | None: ...
+    async def save(self, payment: Payment) -> None: ...
+
+
+class OutboxRepository(Protocol):
+    async def add(self, event: OutboxEvent) -> None: ...
+    async def pending_batch(self, limit: int) -> list[OutboxEvent]: ...
+    async def mark_published(self, event_id: UUID, at: datetime) -> None: ...
+
+
+class UnitOfWork(Protocol):
+    payments: PaymentRepository
+    outbox: OutboxRepository
+
+    async def __aenter__(self) -> Self: ...
+    async def __aexit__(self, *args: Any) -> None: ...
+    async def commit(self) -> None: ...
+
+
+type UowFactory = Callable[[], UnitOfWork]
+
+
+class PaymentGateway(Protocol):
+    async def charge(self, payment: Payment) -> PaymentStatus: ...
+
+
+class WebhookSender(Protocol):
+    async def send(self, payment: Payment) -> None: ...
+
+
+class EventPublisher(Protocol):
+    async def publish(self, event: OutboxEvent) -> None: ...

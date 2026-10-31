@@ -1,0 +1,1 @@
+"""Asynchronous payment service."""

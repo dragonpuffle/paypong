@@ -1,0 +1,11 @@
+{
+  "required_checks": [
+    {"name": "lint", "command": ["{python}", "-m", "ruff", "check", "."], "timeout": 60},
+    {"name": "format", "command": ["{python}", "-m", "ruff", "format", "--check", "."], "timeout": 60},
+    {"name": "behavior", "command": ["{python}", "-m", "pytest", "tests/unit", "tests/http", "tests/architecture", "-q"], "timeout": 120}
+  ],
+  "integration_checks": [
+    {"name": "real-postgres-rabbit", "command": ["{python}", "-m", "pytest", "tests/integration", "--strict-integration", "-q"], "timeout": 180},
+    {"name": "compose", "command": ["docker", "compose", "config", "--quiet"], "timeout": 30}
+  ]
+}
