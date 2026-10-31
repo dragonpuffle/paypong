@@ -9,7 +9,7 @@ from pathlib import Path
 
 def verify(project: Path, integration: bool = False) -> int:
     try:
-        config = json.loads((project / ".ai/pipeline.json").read_text(encoding="utf-8"))
+        config = json.loads((project / ".checks/pipeline.json").read_text(encoding="utf-8"))
         checks = config["required_checks"]
         if not isinstance(checks, list) or not checks:
             raise ValueError("required_checks must be a nonempty list")

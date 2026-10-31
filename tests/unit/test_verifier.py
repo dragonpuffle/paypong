@@ -7,7 +7,7 @@ import pytest
 
 spec = importlib.util.spec_from_file_location(
     "verifier",
-    Path(__file__).resolve().parents[2] / "scripts/ai/verify.py",
+    Path(__file__).resolve().parents[2] / "scripts/checks/verify.py",
 )
 verifier = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(verifier)
@@ -15,8 +15,8 @@ spec.loader.exec_module(verifier)
 
 @pytest.mark.parametrize("checks", [[], None, [{"command": [], "timeout": 1}]])
 def test_invalid_configuration_fails_closed(tmp_path, checks):
-    (tmp_path / ".ai").mkdir()
-    (tmp_path / ".ai/pipeline.json").write_text(json.dumps({"required_checks": checks}))
+    (tmp_path / ".checks").mkdir()
+    (tmp_path / ".checks/pipeline.json").write_text(json.dumps({"required_checks": checks}))
     assert verifier.verify(tmp_path) != 0
 
 
@@ -29,8 +29,8 @@ def test_invalid_configuration_fails_closed(tmp_path, checks):
     ],
 )
 def test_command_failure_fails_closed(tmp_path, command, timeout):
-    (tmp_path / ".ai").mkdir()
-    (tmp_path / ".ai/pipeline.json").write_text(
+    (tmp_path / ".checks").mkdir()
+    (tmp_path / ".checks/pipeline.json").write_text(
         json.dumps(
             {"required_checks": [{"name": "failure", "command": command, "timeout": timeout}]}
         )

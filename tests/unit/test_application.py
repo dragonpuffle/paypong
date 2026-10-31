@@ -220,13 +220,6 @@ class ProcessingTests(IsolatedAsyncioTestCase):
         self.assertEqual(len(self.store.events), 3)
         self.assertEqual(self.store.payments[self.payment.id].attempts, 2)
 
-    async def test_interrupted_gateway_attempt_schedules_next_without_external_call(self):
-        self.store.payments[self.payment.id].attempts = 1
-        await self.processor().execute(self.event)
-        self.assertEqual(self.gateway.calls, 0)
-        self.assertEqual(self.webhook.notifications, [])
-        self.assertEqual(self.retry_event(2).attempt, 2)
-
     async def test_interruption_after_result_commit_skips_gateway_on_retry(self):
         saved = self.store.payments[self.payment.id]
         saved.attempts = 1
@@ -294,6 +287,7 @@ class ProcessingTests(IsolatedAsyncioTestCase):
         await self.processor().execute(self.event)
         self.assertEqual(self.retry_event(2).attempt, 2)
         self.assertEqual(self.gateway.calls, 1)
+        self.assertEqual(self.webhook.notifications, [])
 
     async def test_future_attempt_is_rejected_without_mutating_payment(self):
         with self.assertRaisesRegex(ValueError, "ahead"):

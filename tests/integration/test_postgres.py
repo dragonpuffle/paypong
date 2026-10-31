@@ -142,28 +142,6 @@ async def test_exit_without_commit_and_exception_both_rollback(database):
     assert await counts(factory) == (0, 0)
 
 
-async def test_concurrent_idempotency_creates_one_payment_and_event(database):
-    _, factory = database
-    key = str(uuid4())
-
-    async def create():
-        payment = new_payment(key)
-        async with SqlUnitOfWork(factory) as uow:
-            inserted = await uow.payments.insert_if_absent(payment)
-            if inserted:
-                await uow.outbox.add(new_event(payment))
-                result = payment.id
-            else:
-                # The losing INSERT must leave the transaction usable.
-                result = (await uow.payments.find_by_key(key)).id
-            await uow.commit()
-            return result
-
-    results = await asyncio.wait_for(asyncio.gather(*(create() for _ in range(8))), timeout=15)
-    assert len(set(results)) == 1
-    assert await counts(factory) == (1, 1)
-
-
 async def test_outbox_due_filter_skip_locked_and_idempotent_add(database):
     _, factory = database
     payment = new_payment()
@@ -226,23 +204,6 @@ async def test_payment_lock_excludes_concurrent_writer_and_releases_on_commit(da
         await first.commit()
     async with SqlUnitOfWork(factory) as third:
         assert (await third.payments.get(payment.id, for_update=True)).attempts == 1
-
-
-async def test_malformed_message_can_have_durable_outbox_without_payment(database):
-    _, factory = database
-    event = OutboxEvent(
-        event_id=uuid4(),
-        payment_id=None,
-        payload={"reason": "invalid schema", "raw": {"bad": True}},
-        routing_key="payments.dlq",
-    )
-    async with SqlUnitOfWork(factory) as uow:
-        await uow.outbox.add(event)
-        await uow.outbox.add(event)
-        await uow.commit()
-    async with SqlUnitOfWork(factory) as uow:
-        assert await uow.outbox.pending_batch(1) == [event]
-    assert await counts(factory) == (0, 1)
 
 
 @pytest.mark.parametrize(

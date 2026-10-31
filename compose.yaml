@@ -3,6 +3,7 @@ x-app: &app
   build: .
   environment:
     API_KEY: ${API_KEY:-local-development-key-change-me}
+    DEBUG: ${DEBUG:-false}
     DATABASE_URL: postgresql+asyncpg://paypong:paypong@postgres:5432/paypong
     RABBITMQ_URL: amqp://paypong:paypong@rabbitmq:5672/
   init: true

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     api_key: SecretStr = Field(min_length=16)
+    debug: bool = True
     database_url: str = "postgresql+asyncpg://paypong:paypong@localhost:5432/paypong"
     rabbitmq_url: str = "amqp://paypong:paypong@localhost:5672/"
     publish_timeout: float = Field(default=5, gt=0, le=30)

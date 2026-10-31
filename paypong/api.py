@@ -2,9 +2,10 @@ import hmac
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Security
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.security import APIKeyHeader
 
 from paypong.config import Settings
 from paypong.domain.errors import IdempotencyConflict, PaymentNotFound
@@ -27,7 +28,9 @@ def create_app(settings: Settings | None = None, *, uow_factory=None) -> FastAPI
             app.state.publisher_task = resources.publisher_task
             yield
 
-    async def authenticate(x_api_key: Annotated[str | None, Header()] = None) -> None:
+    api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+    async def authenticate(x_api_key: Annotated[str | None, Security(api_key_header)]) -> None:
         if x_api_key is None or not hmac.compare_digest(
             x_api_key.encode(), config.api_key.get_secret_value().encode()
         ):
@@ -37,9 +40,9 @@ def create_app(settings: Settings | None = None, *, uow_factory=None) -> FastAPI
         title="Paypong",
         lifespan=lifespan,
         dependencies=[Depends(authenticate)],
-        docs_url=None,
+        docs_url="/docs" if config.debug else None,
         redoc_url=None,
-        openapi_url=None,
+        openapi_url="/openapi.json" if config.debug else None,
     )
     if uow_factory is not None:
         app.state.uow_factory = uow_factory

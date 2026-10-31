@@ -20,7 +20,7 @@ BODY = {
 @pytest.fixture
 async def api():
     store = MemoryStore()
-    app = create_app(Settings(api_key=KEY), uow_factory=store.uow)
+    app = create_app(Settings(api_key=KEY, debug=False), uow_factory=store.uow)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url="http://test") as c:
         yield c, store
 
@@ -113,7 +113,26 @@ async def test_nonfinite_metadata_rejected_at_http_boundary(api, number):
     assert not store.payments
 
 
-async def test_no_public_documentation(api):
-    client, _ = api
-    for path in ("/docs", "/redoc", "/openapi.json"):
-        assert (await client.get(path)).status_code == 404
+@pytest.mark.parametrize("debug", [False, True])
+async def test_documentation_controlled_by_debug_env(monkeypatch, debug):
+    monkeypatch.setenv("DEBUG", str(debug).lower())
+    app = create_app(Settings(_env_file=None, api_key=KEY), uow_factory=MemoryStore().uow)
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app), base_url="http://test"
+    ) as client:
+        assert (await client.get("/docs")).status_code == (200 if debug else 404)
+        schema = await client.get("/openapi.json")
+        assert schema.status_code == (200 if debug else 404)
+        if debug:
+            document = schema.json()
+            assert document["components"]["securitySchemes"]["APIKeyHeader"] == {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-Key",
+            }
+            assert document["paths"]["/api/v1/payments"]["post"]["security"] == [
+                {"APIKeyHeader": []},
+            ]
+        # Documentation must not make protected routes public.
+        assert (await client.get(f"/api/v1/payments/{uuid4()}")).status_code == 401
+        assert (await client.get("/redoc")).status_code == 404

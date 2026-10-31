@@ -2,7 +2,14 @@
 
 Асинхронный сервис платежей из тестового задания: FastAPI + Pydantic v2,
 SQLAlchemy 2 async/asyncpg, PostgreSQL, FastStream 0.6/RabbitMQ, Alembic.
-Один пакет, две точки запуска, один consumer. Деньги — Decimal/NUMERIC(18,2).
+Один пакет, две точки запуска, один consumer.
+
+## Архитектура и задача
+
+`domain` — dataclasses; `application` — классы сценариев, DTO и Protocol-порты;
+`infrastructure` — PostgreSQL/RabbitMQ/HTTP/шлюз; `presentation` — HTTP и один
+consumer; `bootstrap` владеет ресурсами и lifecycle. На каждый транзакционный
+этап новый UoW, явный commit и rollback при незавершённом выходе.
 
 ## Быстрый запуск
 
@@ -17,32 +24,16 @@ PostgreSQL и RabbitMQ имеют healthcheck. Одноразовый `migrate` 
 `alembic upgrade head` до запуска API/consumer. API: `http://localhost:8000`.
 В Compose задан демонстрационный ключ `local-development-key-change-me`;
 переопределите `API_KEY` в окружении или `.env` (образец `.env.example`).
-Ключ минимум 16 символов. Swagger/OpenAPI отключены, `/health` тоже требует ключ.
+Ключ минимум 16 символов; платёжные endpoints и `/health` требуют `X-API-Key`.
 БД и брокер наружу не опубликованы. Состояние хранится в именованных volumes.
 
-```sh
-curl -i http://localhost:8000/api/v1/payments \
-  -H 'X-API-Key: local-development-key-change-me' \
-  -H 'Idempotency-Key: order-42' \
-  -H 'Content-Type: application/json' \
-  -d '{"amount":"199.90","currency":"RUB","description":"Заказ 42","metadata":{"order_id":42},"webhook_url":"https://example.com/webhook"}'
+### Swagger и OpenAPI
 
-curl http://localhost:8000/api/v1/payments/PAYMENT_UUID \
-  -H 'X-API-Key: local-development-key-change-me'
-```
-
-В PowerShell используйте `curl.exe` и подходящее для оболочки экранирование JSON.
-POST возвращает 202 с `payment_id`, `status`, `created_at` сразу после SQL commit.
-GET возвращает также amount (JSON-строка), currency, description, metadata,
-webhook_url, processed_at. Неизвестный UUID: 404; некорректный запрос: 422;
-нет/неверный API key: 401; иной payload для прежнего ключа: 409.
-
-Сумма строго положительная, максимум `9999999999999999.99`, до двух дробных
-знаков (хвостовые нули допустимы). Валюта RUB/USD/EUR; описание до 2000 символов;
-metadata — JSON-объект с конечными числами; webhook — HTTP(S), без credentials
-и fragment. URL нормализуется Pydantic. Рекомендуется передавать сумму строкой.
-Idempotency-Key обязателен: 1–255 непробельных символов. Один статический ключ
-API даёт доступ ко всем платежам этого сервиса.
+После `docker compose up -d`. Откроются
+[Swagger UI](http://localhost:8000/docs) и [OpenAPI JSON](http://localhost:8000/openapi.json).
+В Swagger нажмите **Authorize** и введите значение `API_KEY`: интерфейс добавит
+заголовок `X-API-Key` в запросы к API. При `DEBUG=true` страницы документации
+доступны без ключа; проверка ключа у методов API сохраняется. ReDoc отключён.
 
 ## Идемпотентность и доставка
 
@@ -103,15 +94,18 @@ attempt, stage и причиной. Состояние dead_lettered не мен
 идемпотентный ключ и запрос неизвестного результата. DLQ требует операционного
 разбора причины; автоматического replay API в этом задании нет.
 
-## Локальная разработка и проверки
+## Локальная разработка и тесты
 
 Python 3.13+, uv. Зависимости зафиксированы в `uv.lock`:
 
 ```sh
 uv sync --frozen
+export API_KEY=local-development-key-change-me
 # PostgreSQL/RabbitMQ должны быть доступны по DATABASE_URL/RABBITMQ_URL
+export DATABASE_URL=postgresql+asyncpg://paypong:paypong@localhost:5432/paypong
 uv run alembic upgrade head
 uv run uvicorn paypong.api:create_app --factory
+# В другом терминале:
 uv run python -m paypong.worker
 ```
 
@@ -119,12 +113,17 @@ Settings читает `.env`; Alembic читает именно переменн
 API_KEY обязателен при локальном старте (в Compose задан). Остальные настройки
 и ограничения находятся в `paypong/config.py`.
 
+или
+
+В PowerShell задайте `$env:DATABASE_URL='postgresql+asyncpg://paypong:paypong@localhost:5432/paypong'` 
+и `$env:API_KEY='local-development-key-change-me'`.
+
 ```sh
-uv run python scripts/ai/verify.py --project .
+uv run python scripts/checks/verify.py --project .
 ```
 
-Обязательные команды заданы в `.ai/pipeline.json`: Ruff lint + format, unit,
-HTTP-контракты и архитектурные границы. Verifier использует тот же интерпретатор,
+Обязательные команды заданы в `.checks/pipeline.json`: Ruff lint + format, unit
+и HTTP-контракты. Verifier использует тот же интерпретатор,
 не запускает shell и возвращает ошибку при пустых checks, отсутствующей команде,
 timeout или ненулевом коде. Для полной проверки нужны отдельные тестовые сервисы:
 
@@ -133,10 +132,12 @@ docker run -d --name paypong-test-postgres -e POSTGRES_USER=paypong -e POSTGRES_
 docker run -d --name paypong-test-rabbit -e RABBITMQ_DEFAULT_USER=paypong -e RABBITMQ_DEFAULT_PASS=paypong -p 127.0.0.1:55672:5672 rabbitmq:4.1-alpine
 export TEST_DATABASE_URL=postgresql+asyncpg://paypong:paypong@localhost:55432/paypong_test
 export TEST_RABBITMQ_URL=amqp://paypong:paypong@localhost:55672/
-uv run python scripts/ai/verify.py --project . --integration
+uv run python scripts/checks/verify.py --project . --integration
 ```
 
-В PowerShell задайте `$env:TEST_DATABASE_URL='...'` и `$env:TEST_RABBITMQ_URL='...'`.
+В PowerShell задайте `$env:TEST_DATABASE_URL='postgresql+asyncpg://paypong:paypong@localhost:55432/paypong_test'` 
+и `$env:TEST_RABBITMQ_URL='amqp://paypong:paypong@localhost:55672/'`.
+
 Дождитесь готовности сервисов. Integration тесты очищают таблицы и очереди:
 **только отдельная БД с `test` в имени и выделенный брокер/vhost**.
 Отсутствие URL или skipped integration тест считается ошибкой, не успехом.
@@ -144,23 +145,8 @@ uv run python scripts/ai/verify.py --project . --integration
 FastStream publisher confirms/mandatory/persistence, API→consumer→webhook,
 backoff/DLQ и окна сбоя. CI запускает тот же полный verifier с service containers.
 
-## Архитектура и задача
-
-`domain` — dataclasses; `application` — классы сценариев, DTO и Protocol-порты;
-`infrastructure` — PostgreSQL/RabbitMQ/HTTP/шлюз; `presentation` — HTTP и один
-consumer; `bootstrap` владеет ресурсами и lifecycle. На каждый транзакционный
-этап новый UoW, явный commit и rollback при незавершённом выходе.
-
-Спецификация, план, фактические проверки и статус: `docs/tasks/payment-service/`.
-Остановка приложения: `docker compose down` (volumes сохраняются).
-
 Дополнительный сквозной smoke с локальным HTTP-получателем webhook (после старта Compose):
 
 ```sh
-docker run --rm --name paypong-smoke --network paypong_default -v "$PWD/scripts/ai/compose_smoke.py:/smoke.py:ro" python:3.13-slim python /smoke.py
+docker run --rm --name paypong-smoke --network paypong_default -v "$PWD/scripts/checks/compose_smoke.py:/smoke.py:ro" python:3.13-slim python /smoke.py
 ```
-
-Использованные контракты библиотек сверены с установленными версиями и
-[FastStream acknowledgement](https://faststream.ag2.ai/latest/getting-started/acknowledgement/),
-[RabbitBroker API](https://faststream.ag2.ai/latest/api/faststream/rabbit/RabbitBroker/),
-[aio-pika publisher confirms](https://docs.aio-pika.com/rabbitmq-tutorial/7-publisher-confirms.html).
